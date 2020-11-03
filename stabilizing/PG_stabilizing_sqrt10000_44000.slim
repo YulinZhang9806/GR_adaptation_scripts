@@ -1,0 +1,101 @@
+initialize() {
+
+//RECOMBINATIOIN
+//could easily insert using the 'recombinationRate.txt' file provided.
+initializeRecombinationRate($rate,$end);
+
+//MUTATION TYPE
+//additive deleterious mutation, could change 0.5 to 0.1/0 to indicate different dominance coefficient (e.g. partially recessive/recessive)
+initializeMutationType("m1", 0.5, "g", -0.043, 0.23);
+
+m1.convertToSubstitution = F;
+
+//dominant neutral mutation used for stabilizing selection
+initializeMutationType("m2", 0.5, "f", 0);
+
+m2.convertToSubstitution = F;
+
+//MUTATION RATE
+initializeMutationRate(7e-9);
+
+//GENOMIC ELEMENT TYPES
+initializeGenomicElementType("g1",c(m2,m1),c(0.01,1));
+
+//CHORMOSOME ORGANIZATION
+initializeGenomicElement(g1,1,71518362);
+
+}
+
+
+//DEMOGRAPHY AND STRUCTURE
+1{ 
+	defineConstant("simID",getSeed());
+	sim.addSubpop("p1", 10000);
+}
+1:44000 late() {
+//set effect size for each m2 mutation
+	all_m2 = sim.mutationsOfType(m2);
+	new_m2 = all_m2[all_m2.originGeneration == sim.generation];
+	if (size(new_m2)){
+		//draw mutation effect for new mutations
+		effects = rnorm(size(new_m2),0,1);
+		for (i in seqAlong(new_m2)){
+			e = effects[i];
+			mut = new_m2[i];
+			mut.setValue("effect",e);
+		}
+	}
+
+//construct phenotypes from additive effects
+	inds = sim.subpopulations.individuals;
+	for (ind in inds){
+		muts = ind.genomes.mutationsOfType(m2);
+		if (size(muts)){
+			ind.setValue("phenotype", sum(muts.getValue("effect")));
+		}
+		else {
+			ind.setValue("phenotype", 0.0);
+		}
+	}
+	p_mean = mean(inds.getValue("phenotype"));
+	catn(sim.generation+" :");
+	catn("Mean phenotype :"+p_mean);
+	m2muts = sim.mutationsOfType(m2);
+        m2freqs_p1 = sim.mutationFrequencies(p1,m2muts);
+        ave_m2num_p1 = sum(m2freqs_p1);
+	m2num = m2muts.size();
+	catn("total m2 number : "+m2num);
+	catn("Mean m2 mutation number p1 : "+ave_m2num_p1);
+//output effect size and frequency of each m2 mutation for following simulations
+	if (sim.generation==44000) {
+		m2muts = sim.mutationsOfType(m2);
+		muts = m2muts[sim.mutationFrequencies(p1,m2muts) > 0.0];
+		catn("p1 : ");
+		catn("Mutation\tFrequency\tEffect");
+        for (i in seqAlong(muts)){
+                mut = muts[i];
+                freq = sim.mutationFrequencies(p1,mut);
+                e = mut.getValue("effect");
+                catn("m2:"+mut.position+"\t"+freq+"\t"+e);
+        }
+    	sim.outputFull("/place/to/save/your/file/PG_stabilizing_additive_sqrt10000_opt1_run2_gen44000_"+simID+".txt");
+	}
+}
+
+//output mean fitness of the population
+2:44001 early() {
+	catn("Fitness of p1: "+mean(p1.cachedFitness(NULL)));
+}
+
+//reset fitness of each individual to be affected by the phenotype multiplicatively
+fitness(NULL, p1) {
+	phe = individual.getValue("phenotype");
+//could set variance to 3000 to set different selection strength (e.g. dnorm(phe, 0, sqrt(3000));)
+	return dnorm(phe, 0, sqrt(10000));
+}
+
+44001 {
+	sim.simulationFinished();
+}
+
+
