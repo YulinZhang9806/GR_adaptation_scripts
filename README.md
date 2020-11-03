@@ -15,4 +15,4 @@ This folder contains slim scripts for simulations supposing a polygenic trait un
 ```
 ./slim simulation_script.slim > slim.out 
 ```
-I used ```extract_effect_44000/60000.py```to extract information from slim.out, then introduce it to next step simulation script and reset effect sizes for those mutations.
+I used ```extract_effect_44000/60000.py```to extract information from ```slim.out```, then introduce it to next step simulation script and reset effect sizes for those mutations.
