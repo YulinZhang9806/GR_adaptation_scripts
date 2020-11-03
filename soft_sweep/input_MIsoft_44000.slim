@@ -1,0 +1,41 @@
+initialize() {
+
+//RECOMBINATIOIN
+//could easily insert using the 'recombinationRate.txt' file provided.
+initializeRecombinationRate($rate,$end);
+
+//MUTATION TYPE
+//additive deleterious mutation, could change 0.5 to 0.1/0 to indicate different dominance coefficient (e.g. partially recessive/recessive)
+initializeMutationType("m1", 0.5, "g", -0.043, 0.23);
+
+m1.convertToSubstitution = F;
+
+//dominant neutral mutations, used for soft sweep
+initializeMutationType("m2", 0.5, "f", 0); 
+
+//MUTATION RATE
+initializeMutationRate(7e-9);
+
+//GENOMIC ELEMENT TYPES
+initializeGenomicElementType("g1",c(m2,m1),c(1,1));
+
+//CHORMOSOME ORGANIZATION
+initializeGenomicElement(g1,1,71518362);
+}
+
+
+//DEMOGRAPHY AND STRUCTURE
+1{ 
+	defineConstant("simID",getSeed());
+	sim.addSubpop("p1", 10000);
+}
+44000{ 
+	sim.simulationFinished();
+} 
+
+
+10000	late()	{ sim.outputFull("/place/to/save/your/file/MIsoftDominant_additive_run1_gen10000_"+simID+".txt"); } 
+20000	late()	{ sim.outputFull("/place/to/save/your/file/MIsoftDominant_additive_run1_gen20000_"+simID+".txt"); } 
+30000	late()	{ sim.outputFull("/place/to/save/your/file/MIsoftDominant_additive_run1_gen30000_"+simID+".txt"); } 
+40000	late()	{ sim.outputFull("/place/to/save/your/file/MIsoftDominant_additive_run1_gen40000_"+simID+".txt"); } 
+44000	late()	{ sim.outputFull("/place/to/save/your/file/MIsoftDominant_additive_run1_gen44000_"+simID+".txt"); } 

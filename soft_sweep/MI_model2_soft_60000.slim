@@ -1,0 +1,89 @@
+initialize() {
+
+//RECOMBINATIOIN
+//could easily insert using the 'recombinationRate.txt' file provided.
+initializeRecombinationRate($rate,$end);
+
+//MUTATION TYPE
+//additive deleterious mutation, could change 0.5 to 0.1/0 to indicate different dominance coefficient (e.g. partially recessive/recessive)
+initializeMutationType("m1", 0.5, "g", -0.043, 0.23);
+
+//dominant neutral mutation used for soft sweep
+initializeMutationType("m2", 0.5, "f", 0); 
+
+m1.convertToSubstitution = F;
+
+
+//MUTATION RATE
+initializeMutationRate(7e-9);
+
+//GENOMIC ELEMENT TYPES
+initializeGenomicElementType("g1",c(m2,m1),c(1,1));
+
+//CHORMOSOME ORGANIZATION
+initializeGenomicElement(g1,1,71518362);//genome length
+
+
+}
+
+//DEMOGRAPHY AND STRUCTURE
+1{
+//import data from 44000 generation outputFull file
+	sim.readFromPopulationFile("/place/to/save/your/file/MI0.5soft_additive_run1_gen44000_1616830548652.txt"); defineConstant("simID",1616830548652);
+//p2 split from p1 and set Ne of p1 to 5000
+	sim.addSubpopSplit("p2", 5000, p1);
+	p1.setSubpopulationSize(5000);
+}
+
+44001 late() {
+//select all m2 mutations with 0.01<allele frequency<0.99
+	m2muts = sim.mutationsOfType(m2);
+	muts = m2muts[sim.mutationFrequencies(p2,m2muts) > 0.01];
+	muts = muts[sim.mutationFrequencies(p2,muts) < 0.99];
+	
+//if mutations exist, randomly choose one, change its selection coefficient to 0.01 (or 0.001 for different scenarios), stop further accumulating of other m2 mutations, remove other m2 mutations
+	if (size(muts)){
+		mut = sample(muts,1);
+		mut.setSelectionCoeff(0.01);
+		m2.convertToSubstitution = F;
+		g1.setMutationFractions(m1,1.0);
+		delete = m2muts[m2muts.selectionCoeff == 0.0];
+		sim.subpopulations.genomes.removeMutations(delete);
+		print(sim.mutationFrequencies(p2,sim.mutationsOfType(m2)));
+		print(sim.mutationsOfType(m2).selectionCoeff);
+		sim.outputFull("/place/to/save/your/file/MI0.5soft_model2_additive_run1_gen44001_"+simID+".txt");
+	}
+//if the mutation does not exist, stop and exist
+	else{
+		cat(simID+": No sufficient freq contender");
+		sim.simulationFinished();
+	}
+}
+
+44002:59999 late() {
+//if at anytime mut was lost in p2, rerun from 44001 generation
+	m2muts = sim.mutationsOfType(m2);
+	freq = sum(sim.mutationFrequencies(p2,m2muts));
+	if (freq == 0.0){
+		cat(simID+": LOST\n");
+		sim.readFromPopulationFile("/place/to/save/your/file/MI0.5soft_model2_additive_run1_gen44001_"+simID+".txt");
+		setSeed(getSeed()+1);
+	}
+}
+60000 late() {
+//see if the mutation was fixed, if not, rerun from 44001 generation
+	m2muts = sim.mutationsOfType(m2);
+	freq = sum(sim.mutationFrequencies(p2,m2muts));
+	if (freq == 1.0){
+		cat(simID+": Fixed\n");
+		sim.outputFull("/place/to/save/your/file/MI0.5soft_model2_additive_run1_gen60000_"+simID+".txt");
+		sim.simulationFinished();
+	}
+	else{
+		cat(simID+": LOST\n");
+		sim.readFromPopulationFile("/place/to/save/your/file/MI0.5soft_model2_additive_run1_gen44001_"+simID+".txt");
+		setSeed(getSeed()+1);
+	}
+}
+
+
