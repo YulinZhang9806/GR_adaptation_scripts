@@ -19,3 +19,8 @@ This folder contains slim scripts for simulations supposing a polygenic trait un
 ./slim simulation_script.slim > slim.out 
 ```
 I used ```extract_effect_44000/60000.py```to extract information from ```slim.out```, then introduce it to next step simulation script and reset effect sizes for those mutations.
+
+## position & recombination files
+```positions.txt``` contains positions on the genome for adding neutral marker mutations of type m0. In this study, we insert 1 marker mutation per 10,000bp.
+
+```recombinationRate.txt``` contains recombination rate and related position with SLiM coordinate. The first column indicate the end point (bp), the second column indicate the recombination rate, both of which could be directly inserted into *.slim scripts.
