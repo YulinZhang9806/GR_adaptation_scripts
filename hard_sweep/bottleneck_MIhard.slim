@@ -1,0 +1,41 @@
+initialize() {
+
+//RECOMBINATIOIN
+//could easily insert using the 'recombinationRate.txt' file provided.
+initializeRecombinationRate($rate,$end);
+
+//MUTATION TYPE
+//additive deleterious mutation, could change 0.5 to 0.1/0 to indicate different dominance coefficient (e.g. partially recessive/recessive)
+initializeMutationType("m1", 0.5, "g", -0.043, 0.23);
+
+//dominant Mendelian mutation, could change 0.01 to 0.001/0.0001 to indicate different selection coefficient
+initializeMutationType("m2", 0.5, "f", 0.01);
+
+m2.convertToSubstitution = F;
+m1.convertToSubstitution = F;
+
+//MUTATION RATE
+initializeMutationRate(7e-9);
+
+//GENOMIC ELEMENT TYPES
+initializeGenomicElementType("g1",c(m0,m1),c(0,1));
+
+//CHORMOSOME ORGANIZATION
+initializeGenomicElement(g1,1,71518362);
+
+
+}
+
+//DEMOGRAPHY AND STRUCTURE
+1{
+//import data from 60000 generation outputFull file
+	sim.readFromPopulationFile("/place/to/save/your/file/MI0.001hard_model2_additive_run5_60000_1834429086016.txt");
+}
+60001 { 
+//simulate short&severe bottleneck for demographic model2
+	p2.setSubpopulationSize(10); 
+}
+
+60020	late(){ sim.simulationFinished(); }
+
+60020	late()	{ sim.outputFull("/place/to/save/your/file/MI0.001hard_model2_additive_run5_bottleneck1_60020_1834429086016.txt"); } 

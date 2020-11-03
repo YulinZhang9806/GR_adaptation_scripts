@@ -1,0 +1,74 @@
+initialize() {
+
+//RECOMBINATIOIN
+//could easily insert using the 'recombinationRate.txt' file provided.
+initializeRecombinationRate($rate,$end);
+
+//MUTATION TYPE
+//additive deleterious mutation, could change 0.5 to 0.1/0 to indicate different dominance coefficient (e.g. partially recessive/recessive)
+initializeMutationType("m1", 0.5, "g", -0.043, 0.23);
+
+//dominant Mendelian mutation, could change 0.01 to 0.001/0.0001 to indicate different selection coefficient
+initializeMutationType("m2", 0.5, "f", 0.01);
+
+m2.convertToSubstitution = F;
+m1.convertToSubstitution = F;
+
+
+//MUTATION RATE
+initializeMutationRate(7e-9);
+
+//GENOMIC ELEMENT TYPES
+initializeGenomicElementType("g1",m1,1.0);
+
+//CHORMOSOME ORGANIZATION
+initializeGenomicElement(g1,1,71518362);
+
+
+}
+
+//DEMOGRAPHY AND STRUCTURE
+1{
+//import data from 44000 generation outputFull file
+	defineConstant("simID",1606818065726);
+	sim.readFromPopulationFile("/place/to/save/your/file/wholeexome_additive_run1_gen44000_1606818065726.txt");
+//p2 split from p1
+	sim.addSubpopSplit("p2", 1000, p1);
+}
+44001 late() {
+//randomly choose 1 haplotype in p2 genomes, add m2 on the genome
+	sim.outputFull("/place/to/save/your/file/MI0.0001hard_model1_additive_run2_44001_"+simID+".txt");
+	target = sample(p2.genomes, 1);
+	p2.genomes.addNewDrawnMutation(m2,35759181);
+}
+
+44002:59999 late() {
+//if at anytime m2 was lost in p2, rerun from 44001 generation
+	if (sum(p2.genomes.countOfMutationsOfType(m2)) == 0){
+		cat(simID+": LOST\n");
+		sim.readFromPopulationFile("/place/to/save/your/file/MI0.0001hard_model1_additive_run2_44001_"+simID+".txt");
+		setSeed(getSeed()+1);
+		target = sample(p2.genomes, 1);
+		p2.genomes.addNewDrawnMutation(m2,35759181);
+	}
+}
+60000 late() {
+//check if the mutation have fixed
+	fixed = (sum(p2.genomes.countOfMutationsOfType(m2)) == 2000);
+	if (fixed) {
+		cat(simID+": Fixed\n");
+		sim.outputFull("/place/to/save/your/file/MI0.0001hard_model1_additive_run2_60000_"+simID+".txt");
+		sim.simulationFinished();
+		}
+	else {
+		cat(simID+": Not Fixed\n");
+		sim.readFromPopulationFile("/place/to/save/your/file/MI0.0001hard_model1_additive_run2_44001_"+simID+".txt");
+		setSeed(getSeed()+1);
+		target = sample(p2.genomes, 1);
+		p2.genomes.addNewDrawnMutation(m2,35759181);
+	}
+}
+
+
+
+

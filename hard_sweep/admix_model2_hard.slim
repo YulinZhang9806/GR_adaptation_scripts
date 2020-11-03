@@ -1,0 +1,85 @@
+initialize() {
+
+//RECOMBINATIOIN
+//could easily insert using the 'recombinationRate.txt' file provided.
+initializeRecombinationRate($rate,$end);
+
+//MUTATION TYPE
+//marker neutral mutations in p2 to record ancestrial DNA proportion changes
+initializeMutationType("m0", 0.5, "f", 0.0);
+
+//additive deleterious mutation, could change 0.5 to 0.1/0 to indicate different dominance coefficient (e.g. partially recessive/recessive)
+initializeMutationType("m1", 0.5, "g", -0.043, 0.23);
+
+//dominant Mendelian mutation, could change 0.01 to 0.001/0.0001 to indicate different selection coefficient
+initializeMutationType("m2", 0.5, "f", 0.01);
+
+m1.convertToSubstitution = F;
+m0.convertToSubstitution = F;
+m2.convertToSubstitution = F;
+
+//MUTATION RATE
+initializeMutationRate(7e-9);
+
+//GENOMIC ELEMENT TYPES
+initializeGenomicElementType("g1",m1,1.0);
+
+//CHORMOSOME ORGANIZATION
+initializeGenomicElement(g1,1,71518362);//genome length
+
+//define positions on genome to add m0 mutations, could also be easily inserted using 'positions.txt'.
+defineConstant("positions",$position);
+
+}
+
+1 {
+//import data from 60000 generation outputFull file
+	defineConstant("simID",1931420088298);
+	sim.readFromPopulationFile("/place/to/save/your/file/MI0.0001hard_model2_additive_run4_bottleneck1_60020_1931420088298.txt");
+}
+
+60021 { 
+//add neutral marker m0 mutations and set Ne of p2 back to 5000
+	for (pos in positions) {
+		p2.genomes.addNewDrawnMutation(m0,pos);
+	}
+	p2.setSubpopulationSize(5000); 
+}
+
+//return absolute fitness of p1 and p2 for each generation
+60022:62021 early() {
+	print("Fitness of p2: "+mean(p2.cachedFitness(NULL))+"\n"+"Fitness of p1: "+mean(p1.cachedFitness(NULL))+"\n");
+}
+
+60022{ 
+//start migration, could change admixture fraction here by setting different migration rate
+	p2.setMigrationRates(p1, 0.001);
+}
+
+60023{ 
+//stop migration
+	p2.setMigrationRates(p1, 0);
+}
+
+60021:62020 late() {
+//print adaptive mutation message
+	m2muts = sim.mutationsOfType(m2);
+	mut = m2muts[m2muts.selectionCoeff > 0.0];
+	print(sim.generation+":\n"+"Mutation\tFrequency\tSelectionCoeff\n");
+	for (m in mut){
+		print("m2:"+m.id+"\t"+sim.mutationFrequencies(p2,m)+"\t"+m.selectionCoeff+"\n");
+	}
+//print ancestral genome proportion message
+	m0muts = sim.mutationsOfType(m0);
+	freq = sum(sim.mutationFrequencies(p2,m0muts));
+	ancestral = freq/7151;
+	print("Average m0 : "+freq+"\n"+"Ancestral genome : "+ancestral+"\n");
+}
+
+62020	late()	{ 
+	sim.outputFull("/place/to/save/your/file/MI0.0001hard_model2_additive0.1_run7_gen62020_"+simID+".txt"); 
+}
+
+62021 {
+	sim.simulationFinished();
+}
