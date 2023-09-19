@@ -2,7 +2,7 @@
 
 This repository contains scripts for simulations in 'Local Adaptations under Genetic Rescue' , please check the paper for specific details in our study.
 
-Scripts here contain those used for simulations with SLiM (.slim files) and for follow up data analysis and plotting (.py files). slim scripts here were written based on manual of SLiM v3.1 and run with SLiM-4.
+Scripts here contain those used for simulations with SLiM (.slim files) and for follow up data analysis and plotting (.py files). slim scripts here were written based on manual of SLiM v3.1.
 
 For all the conducted simulations, direct output files should be kept for following up analysis. 
 (e.g. by running ```./slim simulation_script.slim > slim.out ```, the ```slim.out``` should be kept throughout the simulation process)
